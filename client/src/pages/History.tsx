@@ -24,7 +24,7 @@ const ROOM_STYLE_LABELS: Record<string, string> = {
   nordic: "北歐風格",
   american: "現代都會",
   rustic: "鄉村風格",
-  "wooden-floor": "木頭地板",
+  "wooden-floor": "木頭地",
   "artist-holding": "藝術家手拿",
   "bedroom-with-eaves": "屋簷臥房",
 };

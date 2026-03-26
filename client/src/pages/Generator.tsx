@@ -131,13 +131,17 @@ export default function Generator() {
   };
 
   const runGenerate = async (sets: PendingSet[]) => {
-    if (!selectedFile || !previewUrl || !user) {
+    if (!selectedFile || !previewUrl) {
       toast.error("請先上傳作品圖片");
+      return;
+    }
+    if (!user?.authUserId) {
+      toast.error("身分尚未就緒，請稍候或重新整理頁面（需已連線 Supabase）");
       return;
     }
     const token = (await getSupabase()?.auth.getSession())?.data?.session?.access_token;
     if (!token) {
-      toast.error("請重新登入");
+      toast.error("無法取得登入狀態，請重新整理頁面");
       return;
     }
     setIsGenerating(true);
@@ -179,19 +183,34 @@ export default function Generator() {
       <header className="border-b border-border bg-card">
         <div className="container py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold text-foreground">藝術作品模擬圖生成</h1>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {user?.isAnonymous && (
+              <span className="text-xs text-muted-foreground hidden sm:inline">訪客模式</span>
+            )}
             <Button variant="outline" size="sm" onClick={() => navigate("/archive")}>
               月度歸檔
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate("/prompts")}>
-              提示詞管理
-            </Button>
+            {user?.isAdmin && (
+              <Button variant="outline" size="sm" onClick={() => navigate("/prompts")}>
+                提示詞管理
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={() => navigate("/history")}>
               歷史記錄
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => logout().then(() => navigate("/login"))}>
-              登出
-            </Button>
+            {user?.isAdmin ? (
+              <Button variant="ghost" size="sm" onClick={() => logout().then(() => navigate("/"))}>
+                登出
+              </Button>
+            ) : user?.isAnonymous ? (
+              <Button variant="outline" size="sm" onClick={() => navigate("/login")}>
+                管理員登入
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => logout().then(() => navigate("/"))}>
+                登出
+              </Button>
+            )}
           </div>
         </div>
       </header>

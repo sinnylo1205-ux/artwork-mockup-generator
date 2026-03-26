@@ -20,6 +20,11 @@ export default function Login() {
     navigate("/");
     return null;
   }
+  // 已用信箱登入的非管理員：直接回首頁（若要改帳號請先登出）
+  if (me && !me.isAnonymous) {
+    navigate("/");
+    return null;
+  }
 
   const supabase = getSupabase();
 
@@ -40,12 +45,10 @@ export default function Login() {
         const next = await refresh();
         if (next?.isAdmin) {
           toast.success("登入成功");
-          navigate("/");
         } else {
-          toast.error("您的帳號尚未被設為管理員，無法使用本站");
-          await supabase.auth.signOut();
-          await refresh();
+          toast.success("已登入，可使用生圖與歷史記錄");
         }
+        navigate("/");
       }
     } finally {
       setLoading(false);
@@ -69,15 +72,9 @@ export default function Login() {
         toast.success("已送出驗證信，請至信箱點擊連結完成註冊（若未收到請檢查垃圾信匣，或請管理員於 Supabase 關閉「Confirm email」）");
         setMode("signIn");
       } else if (data.session) {
-        const next = await refresh();
-        if (next?.isAdmin) {
-          toast.success("註冊成功");
-          navigate("/");
-        } else {
-          toast.success("註冊成功，但您的帳號尚未被設為管理員，請聯絡管理員");
-          await supabase.auth.signOut();
-          await refresh();
-        }
+        await refresh();
+        toast.success("註冊成功");
+        navigate("/");
       }
     } finally {
       setLoading(false);
@@ -132,7 +129,7 @@ export default function Login() {
       <Card className="max-w-md w-full">
         <CardHeader>
           <CardTitle>藝術作品模擬圖</CardTitle>
-          <CardDescription>僅限管理員登入使用</CardDescription>
+          <CardDescription>管理員請在此登入；一般用戶可於首頁以訪客身分直接使用</CardDescription>
         </CardHeader>
         <CardContent>
           <form

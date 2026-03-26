@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { getPromptTemplates, updatePromptTemplate, type PromptTemplate } from "@/lib/supabase-api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 export default function Prompts() {
   const [, navigate] = useLocation();
+  const { user, loading: authLoading } = useAuthContext();
   const [list, setList] = useState<PromptTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -35,8 +37,13 @@ export default function Prompts() {
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user?.isAdmin) {
+      setIsLoading(false);
+      return;
+    }
     refetch();
-  }, [refetch]);
+  }, [authLoading, user?.isAdmin, refetch]);
 
   const byType = list.reduce<Record<string, PromptTemplate[]>>((acc, p) => {
     (acc[p.type] = acc[p.type] ?? []).push(p);
@@ -65,10 +72,29 @@ export default function Prompts() {
     setEditingKey(null);
   };
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!user?.isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle>需要管理員權限</CardTitle>
+            <CardDescription>提示詞管理僅限管理員，請由導航列「管理員登入」使用管理員帳號登入。</CardDescription>
+          </CardHeader>
+          <CardContent className="flex gap-2">
+            <Button onClick={() => navigate("/login")}>前往登入</Button>
+            <Button variant="outline" onClick={() => navigate("/")}>
+              回首頁
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }

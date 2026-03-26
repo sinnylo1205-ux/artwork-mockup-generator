@@ -1,5 +1,5 @@
 // Supabase Edge Function: 生圖入口
-// 驗證 JWT、檢查 user_roles.role = 'admin'、寫入 artwork_generations
+// 驗證 JWT（含匿名訪客）、寫入 artwork_generations
 // Replicate 路徑：讀 REPLICATE_API_TOKEN、組 prompt、呼叫 Replicate、輪詢、寫入 Storage + generated_artwork_images + 更新 status
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -98,15 +98,7 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: `Invalid or expired token: ${msg}` }, 401);
   }
 
-  const { data: roleRow } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!roleRow || roleRow.role !== "admin") {
-    return jsonResponse({ error: "Admin access required" }, 403);
-  }
+  // 已登入者皆可生圖（含匿名訪客 JWT）；管理員與提示詞後台權限由前端與 RLS 區分
 
   let body: {
     originalImageUrl?: string;

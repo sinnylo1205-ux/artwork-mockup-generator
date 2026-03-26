@@ -1,11 +1,11 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
 type Props = { children: React.ReactNode };
 
-/** 未登入或非管理員時導向 /login，通過則渲染 children */
+/** 等待身分初始化（含匿名訪客）後再渲染；不強制導向登入頁 */
 export function RequireAuth({ children }: Props) {
-  const { user, loading } = useAuth({ redirectOnUnauthenticated: true, redirectPath: "/login" });
+  const { loading } = useAuthContext();
 
   if (loading) {
     return (
@@ -13,10 +13,6 @@ export function RequireAuth({ children }: Props) {
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
-  }
-
-  if (!user) {
-    return null;
   }
 
   return <>{children}</>;
